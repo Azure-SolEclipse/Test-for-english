@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocab Challenge</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f2f0f8;
+    color: #222;
+  }
+
+  .game-shell {
+    width: min(1000px, 94%);
+    margin: 0 auto;
+    padding: 40px 0;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .card,
+  .question-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+  }
+
+  .start-card,
+  .end-card {
+    max-width: 650px;
+    margin: 70px auto;
+    padding: 55px 35px;
+    text-align: center;
+  }
+
+  .badge {
+    display: inline-block;
+    color: #5a2ca0;
+    font-weight: bold;
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    margin: 10px 0 14px;
+  }
+
+  .start-card p,
+  .end-card p {
+    font-size: 1.15rem;
+  }
+
+  .main-btn {
+    border: none;
+    background: #673ab7;
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1.05rem;
+    cursor: pointer;
+    margin-top: 18px;
+  }
+
+  .main-btn:hover { filter: brightness(1.08); }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    font-weight: bold;
+    font-size: 1.05rem;
+    margin-bottom: 16px;
+  }
+
+  .question-card {
+    padding: 34px;
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  .question-type {
+    display: inline-block;
+    color: #5a2ca0;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .question-card h2 {
+    margin: 8px 0 0;
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    line-height: 1.35;
+  }
+
+  .answers-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .answer-btn {
+    min-height: 105px;
+    border: none;
+    border-radius: 16px;
+    color: white;
+    padding: 20px;
+    font-size: 1.15rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+
+  .answer-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+  }
+
+  .answer-btn:disabled { cursor: default; }
+
+  .answer-btn:nth-child(1) { background: #e53935; }
+  .answer-btn:nth-child(2) { background: #1e88e5; }
+  .answer-btn:nth-child(3) { background: #f9a825; }
+  .answer-btn:nth-child(4) { background: #43a047; }
+
+  .answer-btn.correct { outline: 6px solid #1b5e20; }
+  .answer-btn.wrong {
+    opacity: 0.55;
+    outline: 6px solid #7f0000;
+  }
+
+  .feedback {
+    min-height: 34px;
+    margin-top: 20px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+
+  .correct-text { color: #1b7d2b; }
+  .wrong-text { color: #b71c1c; }
+
+  .hidden { display: none !important; }
+
+  #next-btn {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .final-score {
+    font-size: 2.7rem;
+    font-weight: bold;
+    color: #5a2ca0;
+    margin: 20px 0 8px;
+  }
+
+  @media (max-width: 700px) {
+    .game-shell { padding-top: 20px; }
+    .answers-grid { grid-template-columns: 1fr; }
+    .answer-btn { min-height: 78px; }
+    .top-bar { font-size: 0.95rem; }
+  }
+</style>
+</head>
+<body>
+
+<main class="game-shell">
+  <section id="start-screen" class="screen active">
+    <div class="card start-card">
+      <div class="badge">Vocab Quiz (put something up here)</div>
+      <h1>Vocab Quiz Game</h1>
+      <p>Match each definition to the correct vocabulary word.<br>Each correct answer is worth 100 points.</p>
+      <button id="start-btn" class="main-btn">START GAME</button>
+    </div>
+  </section>
+
+  <section id="quiz-screen" class="screen">
+    <div class="top-bar">
+      <div id="progress">Question 1 / 20</div>
+      <div id="score">Score: 0</div>
+    </div>
+
+    <div class="question-card">
+      <div class="question-type">DEFINITION</div>
+      <h2 id="question-text">Question goes here</h2>
+    </div>
+
+    <div id="answers" class="answers-grid"></div>
+
+    <div id="feedback" class="feedback"></div>
+    <button id="next-btn" class="main-btn hidden">NEXT QUESTION</button>
+  </section>
+
+  <section id="end-screen" class="screen">
+    <div class="card end-card">
+      <div class="badge">FINISHED!</div>
+      <h1>Your Results</h1>
+      <div id="final-score" class="final-score">0 / 2000</div>
+      <p id="final-message"></p>
+      <button id="restart-btn" class="main-btn">PLAY AGAIN</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const questions = [
+  { question: 'Which word means "to approach and speak to first"?', correct: "Accost", choices: ["Accost", "Overt", "Suppliant", "Celerity"] },
+  { question: 'Which word means "a comment indicating strong criticism or disapproval"?', correct: "Animadversion", choices: ["Animadversion", "Propriety", "Gambit", "Maelstrom"] },
+  { question: 'Which word means "desirous of something to the point of greed"?', correct: "Avid", choices: ["Avid", "Myopic", "Brackish", "Summarily"] },
+  { question: 'Which word means "having a salty taste and unpleasant to drink"?', correct: "Brackish", choices: ["Brackish", "Halcyon", "Overt", "Histrionic"] },
+  { question: 'Which word means "swiftness; rapidity of motion or action"?', correct: "Celerity", choices: ["Celerity", "Sacrilege", "Devious", "Talisman"] },
+  { question: 'Which word means "done or acting in a shifty or underhanded way"?', correct: "Devious", choices: ["Devious", "Overt", "Suppliant", "Halcyon"] },
+  { question: 'Which word means "in chess, an opening move that involves risk in order to gain a later advantage"?', correct: "Gambit", choices: ["Gambit", "Celerity", "Animadversion", "Propriety"] },
+  { question: 'Which word means "a legendary bird identified with the kingfisher"?', correct: "Halcyon", choices: ["Halcyon", "Maelstrom", "Talisman", "Brackish"] },
+  { question: 'Which word means "theatrical, artificial, or melodramatic"?', correct: "Histrionic", choices: ["Histrionic", "Myopic", "Avid", "Summarily"] },
+  { question: 'Which word means "deliberately setting or causing fires"?', correct: "Incendiary", choices: ["Incendiary", "Pejorative", "Overt", "Suppliant"] },
+  { question: 'Which word means "a whirlpool of great size and violence"?', correct: "Maelstrom", choices: ["Maelstrom", "Gambit", "Propriety", "Animadversion"] },
+  { question: 'Which word means "nearsighted; not broad"?', correct: "Myopic", choices: ["Myopic", "Histrionic", "Overt", "Brackish"] },
+  { question: 'Which word means "open; not hidden"?', correct: "Overt", choices: ["Overt", "Devious", "Suppliant", "Pejorative"] },
+  { question: 'Which word means "expressing disapproval or disparagement"?', correct: "Pejorative", choices: ["Pejorative", "Celerity", "Halcyon", "Talisman"] },
+  { question: 'Which word means "the state of being proper or appropriate"?', correct: "Propriety", choices: ["Propriety", "Sacrilege", "Gambit", "Maelstrom"] },
+  { question: 'Which word means "improper or disrespectful treatment of something held sacred"?', correct: "Sacrilege", choices: ["Sacrilege", "Animadversion", "Celerity", "Overt"] },
+  { question: 'Which word means "without delay or formality"?', correct: "Summarily", choices: ["Summarily", "Avid", "Histrionic", "Brackish"] },
+  { question: 'Which word means "asking humbly and earnestly"?', correct: "Suppliant", choices: ["Suppliant", "Devious", "Incendiary", "Myopic"] },
+  { question: 'Which word means "an object that serves as a charm or is believed to confer magical powers"?', correct: "Talisman", choices: ["Talisman", "Halcyon", "Gambit", "Propriety"] },
+  { question: 'Which word means "to move in waves or wavelike motion"?', correct: "Undulate", choices: ["Undulate", "Accost", "Celerity", "Overt"] }
+];
+
+const startScreen = document.getElementById("start-screen");
+const quizScreen = document.getElementById("quiz-screen");
+const endScreen = document.getElementById("end-screen");
+
+const startBtn = document.getElementById("start-btn");
+const restartBtn = document.getElementById("restart-btn");
+const nextBtn = document.getElementById("next-btn");
+
+const progress = document.getElementById("progress");
+const scoreText = document.getElementById("score");
+const questionText = document.getElementById("question-text");
+const answers = document.getElementById("answers");
+const feedback = document.getElementById("feedback");
+const finalScore = document.getElementById("final-score");
+const finalMessage = document.getElementById("final-message");
+
+let gameQuestions = [];
+let currentQuestion = 0;
+let score = 0;
+let correctCount = 0;
+
+function shuffle(array) {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function showScreen(screen) {
+  [startScreen, quizScreen, endScreen].forEach(s => s.classList.remove("active"));
+  screen.classList.add("active");
+}
+
+function startGame() {
+  gameQuestions = shuffle(questions);
+  currentQuestion = 0;
+  score = 0;
+  correctCount = 0;
+  showScreen(quizScreen);
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = gameQuestions[currentQuestion];
+
+  progress.textContent = `Question ${currentQuestion + 1} / ${gameQuestions.length}`;
+  scoreText.textContent = `Score: ${score}`;
+  questionText.textContent = q.question;
+
+  feedback.textContent = "";
+  feedback.className = "feedback";
+  nextBtn.classList.add("hidden");
+  answers.innerHTML = "";
+
+  const shuffledChoices = shuffle(q.choices);
+
+  shuffledChoices.forEach(choice => {
+    const button = document.createElement("button");
+    button.className = "answer-btn";
+    button.textContent = choice;
+    button.addEventListener("click", () => checkAnswer(button, choice, q.correct));
+    answers.appendChild(button);
+  });
+}
+
+function checkAnswer(clickedButton, selectedAnswer, correctAnswer) {
+  const buttons = document.querySelectorAll(".answer-btn");
+
+  buttons.forEach(button => {
+    button.disabled = true;
+    if (button.textContent === correctAnswer) {
+      button.classList.add("correct");
+    }
+  });
+
+  if (selectedAnswer === correctAnswer) {
+    score += 100;
+    correctCount++;
+    feedback.textContent = "Correct! +100 points";
+    feedback.classList.add("correct-text");
+  } else {
+    clickedButton.classList.add("wrong");
+    feedback.textContent = `Incorrect. The correct answer is ${correctAnswer}.`;
+    feedback.classList.add("wrong-text");
+  }
+
+  scoreText.textContent = `Score: ${score}`;
+  nextBtn.classList.remove("hidden");
+}
+
+function nextQuestion() {
+  currentQuestion++;
+
+  if (currentQuestion < gameQuestions.length) {
+    showQuestion();
+  } else {
+    endGame();
+  }
+}
+
+function endGame() {
+  showScreen(endScreen);
+
+  finalScore.textContent = `${score} / 2000`;
+
+  if (correctCount === 20) {
+    finalMessage.textContent = `20/20 correct\nPerfect score!`;
+  } else if (correctCount >= 16) {
+    finalMessage.textContent = `${correctCount}/20 correct — Great job!`;
+  } else if (correctCount >= 12) {
+    finalMessage.textContent = `${correctCount}/20 correct — Nice work!`;
+  } else {
+    finalMessage.textContent = `${correctCount}/20 correct — Try again and beat your score!`;
+  }
+}
+
+startBtn.addEventListener("click", startGame);
+restartBtn.addEventListener("click", startGame);
+nextBtn.addEventListener("click", nextQuestion);
+</script>
+
+</body>
+</html>
